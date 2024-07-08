@@ -5,7 +5,9 @@
 #include "serialPort.h"
 
 volatile char RX_Buffer=0;
-uint8_t adc_value;
+//volatile act = 0;
+volatile uint8_t adc_value;
+
 
 void ADC_Init() {
 	DIDR0 = 0x01; // digital input disable
@@ -24,7 +26,6 @@ uint16_t ADC_Read() {
 int main(void)
 {
 	uint8_t l_red = 0;
-	uint8_t act = 0;
 	DDRB |= (1 << PORTB1)|(1 << PORTB2)|(1 << PORTB5); // salida puertos B 1,2,5
 	DDRC &= ~(1<< PINC3);
 	/* configuracion pwm puertos 1 y 2*/
@@ -51,27 +52,22 @@ int main(void)
 			PORTB |= (1<< PORTB5);
 		}
 		// leer
-		if(RX_Buffer){
-			act = RX_Buffer;
-			RX_Buffer=0;
-			SerialPort_Send_Data(act);
-			while(!RX_Buffer){
-				adc_value = ADC_Read();	
-				switch (act) {
-					case 'R':
-						l_red = adc_value;
-					break;
-					case 'G':
-						OCR1B = adc_value;
-					case 'B':
-						OCR1A = adc_value;
-					break;
-				}
-				_delay_ms(100);
-			}
+		adc_value = ADC_Read();
+		switch (RX_Buffer) {
+			case 'R':
+			l_red = adc_value;
+			break;
+			case 'G':
+			OCR1B = adc_value;
+			case 'B':
+			OCR1A = adc_value;
+			break;
 		}
+		_delay_ms(100);
     }
 }
 ISR(USART_RX_vect){
 	RX_Buffer = UDR0;
+	/*act=RX_Buffer;
+	RX_Buffer=0;*/
 }
