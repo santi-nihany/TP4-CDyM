@@ -15,7 +15,7 @@ void ADC_Init() {
 	ADMUX |= (1 << REFS0) | (1 << ADLAR) | (1 << MUX1) | (1 << MUX0); // Vref = AVCC, left justified, AC3 pin
 }
 
-uint16_t ADC_Read() {
+uint8_t ADC_Read() {
 	ADCSRA |= (1 << ADSC);  // Iniciar conversión
 	while (!(ADCSRA & (1 << ADSC)));  // Esperar a que termine la conversión
 	ADCSRA |= (1<< ADIF); // clear the ADIF flag
@@ -26,6 +26,7 @@ uint16_t ADC_Read() {
 int main(void)
 {
 	uint8_t l_red = 0;
+	uint8_t ant = 0;
 	DDRB |= (1 << PORTB1)|(1 << PORTB2)|(1 << PORTB5); // salida puertos B 1,2,5
 	DDRC &= ~(1<< PINC3);
 	/* configuracion pwm puertos 1 y 2*/
@@ -55,15 +56,28 @@ int main(void)
 		adc_value = ADC_Read();
 		switch (RX_Buffer) {
 			case 'R':
-			l_red = adc_value;
-			break;
+				l_red = adc_value;
+				if(ant != RX_Buffer){
+					SerialPort_Send_String("CAMBIANDO INTENSIDAD DEL ROJO\n\r");
+					ant=RX_Buffer;		
+				}
+				break;
 			case 'G':
-			OCR1B = adc_value;
+				OCR1B = adc_value;
+				if(ant != RX_Buffer){
+					SerialPort_Send_String("CAMBIANDO INTENSIDAD DEL VERDE\n\r");
+					ant=RX_Buffer;
+				}
+				break;
 			case 'B':
-			OCR1A = adc_value;
-			break;
+				OCR1A = adc_value;
+				if(ant != RX_Buffer){
+					SerialPort_Send_String("CAMBIANDO INTENSIDAD DEL AZUL\n\r");
+					ant=RX_Buffer;
+				}
+				break;
 		}
-		_delay_ms(100);
+		_delay_us(16);
     }
 }
 ISR(USART_RX_vect){
